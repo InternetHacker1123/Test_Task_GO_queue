@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func getReq(URL string) ([]byte, error){
+func getReq(URL string) ([]byte, error) {
     resp, err := http.Get(URL)
     if err != nil {
         fmt.Println("Ошибка при выполнении GET запроса:", err)
@@ -19,50 +19,47 @@ func getReq(URL string) ([]byte, error){
         fmt.Println("Ошибка при чтении ответа:", err)
         return nil, err
     }
-
     return body, nil
 }
 
-
-func queue(f func(string) ([]byte, error), numWorkers int, numTasks int, tasks chan string, results chan string, data string) {
-    for c := 1; c <= numWorkers; c++ {
-        go func() {
-            for task := range tasks {
-                result, err := f(task)
-                if err != nil {
-                    fmt.Println("Ошибка при выполнении задачи:", err)
-                } else {
-                    results <- string(result)
-                }
-            }
-        }()
+func worker(tasks chan string, results chan []byte, f func(string) ([]byte, error)) {
+    for task := range tasks {
+        result, error := f(task)
+		if error != nil {
+			fmt.Println(error)
+		}
+        results <- result
     }
+}
 
-    for c := 1; c <= numTasks; c++ {
+
+func queue(numWorkers int, numTasks int, tasks chan string, results chan []byte, data string) {
+
+    for c := 1; c <= numWorkers; c++ {
+		go worker(tasks, results, getReq)
+		fmt.Println("Горутина запущена")
+	}
+        
+
+	for c := 1; c <= numTasks; c++ {
         tasks <- data
     }
-    close(tasks)
+	close(tasks)
 
     for c := 1; c <= numTasks; c++ {
         result := <-results
-        fmt.Println("Результат:", result)
+        fmt.Println("Результат:", string(result))
     }
 }
 
-
-
 func main() {
-	tasks := make(chan string)
-	results := make(chan string)
-	num_workers := 10
-	num_tasks := 1000
-	data := "https://postman-rest-api-learner.glitch.me/info"
+	numWorkers := 3
+    numTasks := 20
+	
+    tasks := make(chan string, numTasks)
+    results := make(chan []byte, numTasks)
 
+    data := "https://postman-rest-api-learner.glitch.me/info"
 
-	go queue(getReq, num_workers, num_tasks, tasks, results, data)
-
-
-
+    queue(numWorkers, numTasks, tasks, results, data)
 }
-
-
