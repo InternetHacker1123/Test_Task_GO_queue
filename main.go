@@ -33,10 +33,10 @@ func worker(tasks chan string, results chan []byte, f func(string) ([]byte, erro
 }
 
 
-func queue(numWorkers int, numTasks int, tasks chan string, results chan []byte, data string) {
+func queue(numWorkers int, numTasks int, tasks chan string, results chan []byte, data string, f func(string) ([]byte, error)) {
 
     for c := 1; c <= numWorkers; c++ {
-		go worker(tasks, results, getReq)
+		go worker(tasks, results, f)
 		fmt.Println("Горутина запущена")
 	}
         
@@ -61,5 +61,5 @@ func main() {
 
     data := "https://postman-rest-api-learner.glitch.me/info"
 
-    queue(numWorkers, numTasks, tasks, results, data)
+    queue(numWorkers, numTasks, tasks, results, data, getReq)
 }
