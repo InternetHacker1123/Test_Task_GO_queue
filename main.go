@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+// функция обработчик тасков
 func getReq(URL string) ([]byte, error) {
     resp, err := http.Get(URL)
     if err != nil {
@@ -22,6 +23,7 @@ func getReq(URL string) ([]byte, error) {
     return body, nil
 }
 
+// функция-воркер в очереди 
 func worker(tasks chan string, results chan []byte, f func(string) ([]byte, error)) {
     for task := range tasks {
         result, error := f(task)
@@ -32,7 +34,7 @@ func worker(tasks chan string, results chan []byte, f func(string) ([]byte, erro
     }
 }
 
-
+// очередь
 func queue(numWorkers int, numTasks int, tasks chan string, results chan []byte, data string, f func(string) ([]byte, error)) {
 
     for c := 1; c <= numWorkers; c++ {
