@@ -29,6 +29,7 @@ func worker(tasks chan string, results chan []byte, f func(string) ([]byte, erro
         result, error := f(task)
 		if error != nil {
 			fmt.Println(error)
+			continue
 		}
         results <- result
     }
