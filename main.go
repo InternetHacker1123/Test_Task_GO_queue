@@ -56,7 +56,7 @@ func queue(numWorkers int, numTasks int, tasks chan string, results chan []byte,
 }
 
 func main() {
-	numWorkers := 3
+    numWorkers := 3
     numTasks := 20
 	
     tasks := make(chan string, numTasks)
