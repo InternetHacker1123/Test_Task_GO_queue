@@ -4,65 +4,146 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 )
 
+
+type Task struct {
+    id int
+    job Data
+}
+
+type Result struct {
+    id int
+    job Data
+    result Data
+}
+
+
+type Data interface{}
+
+//функция обработчик тасков 2
+func inc(task Task) (Result, error) {
+    res := task.job.(int)
+    res++
+    result := Result{id: task.id, job: task.job, result: res}
+    return result, nil
+}
+
+
+
 // функция обработчик тасков
-func getReq(URL string) ([]byte, error) {
-    resp, err := http.Get(URL)
+func getReq(task Task) (Result, error) {
+    resp, err := http.Get(task.job.(string))
     if err != nil {
-        fmt.Println("Ошибка при выполнении GET запроса:", err)
-        return nil, err
+        return Result{id: task.id, job: task.job, result: "Ошибка при выполнении запроса"}, err
     }
     defer resp.Body.Close()
 
     body, err := io.ReadAll(resp.Body)
     if err != nil {
-        fmt.Println("Ошибка при чтении ответа:", err)
-        return nil, err
+        return Result{id: task.id, job: task.job, result: "Ошибка при чтении ответа"}, err
     }
-    return body, nil
+    result := Result{id: task.id, job: task.job, result: string(body)}
+    return result, nil
 }
 
 // функция-воркер в очереди 
-func worker(tasks chan string, results chan []byte, f func(string) ([]byte, error)) {
+func worker(tasks chan Task, results chan Result, f func(task Task) (Result, error), wg *sync.WaitGroup) {
+    defer wg.Done()
     for task := range tasks {
-        result, error := f(task)
-		if error != nil {
-			fmt.Println(error)
-			continue
+        result, err := f(task)
+
+		if err != nil {
+            fmt.Println(err)
+            continue
 		}
-        results <- result
+
+        taskResult := result
+
+        results <- taskResult
     }
 }
 
-// очередь
-func queue(numWorkers int, numTasks int, tasks chan string, results chan []byte, data string, f func(string) ([]byte, error)) {
 
+// Функция запуска воркеров
+func runWorkers(numWorkers int, tasks chan Task, results chan Result, f func(task Task) (Result, error)) {
+    wg := new(sync.WaitGroup)
     for c := 1; c <= numWorkers; c++ {
-		go worker(tasks, results, f)
+        wg.Add(1)
+		go worker(tasks, results, f, wg)
 		fmt.Println("Горутина запущена")
 	}
-        
+    wg.Wait()
+}
 
-	for c := 1; c <= numTasks; c++ {
-        tasks <- data
-    }
-	close(tasks)
 
-    for c := 1; c <= numTasks; c++ {
+// функция показа результатов выполнения тасков
+func showResults(results chan Result) {
+    defer close(results)
+    for c := 1; c <= len(results); c++ {
         result := <-results
-        fmt.Println("Результат:", string(result))
+        fmt.Println("Результат:", rune(result.id), result.job, result.result)
     }
+    
+    
+}
+
+// очередь
+func queue(numWorkers int, numTasks int, tasks chan Task, results chan Result, data Data, f func(task Task) (Result, error)) {
+    
+    switch data.(type) {
+
+    case int: formattingData := int(data.(int))
+        for c := 1; c <= numTasks; c++ {
+            task := Task{id: c, job: formattingData}
+            tasks <- task
+        }
+        close(tasks)
+        runWorkers(numWorkers, tasks, results, f)
+        showResults(results)
+
+
+    case string: formattingData := string(data.(string))
+        for c := 1; c <= numTasks; c++ {
+            task := Task{id: c, job: formattingData}
+            tasks <- task
+        }
+        close(tasks)
+        runWorkers(numWorkers, tasks, results, f)
+        showResults(results)
+
+
+    case []int: formattingData := []int(data.([]int))
+        for c := 0; c <= len(formattingData) - 1; c++ {
+            task := Task{id: c, job: formattingData[c]}
+            tasks <- task
+        }
+        close(tasks)
+        runWorkers(numWorkers, tasks, results, f)
+        showResults(results)
+
+
+    case []string: formattingData := []string(data.([]string))
+        for c := 0; c <= len(formattingData) - 1; c++ {
+            task := Task{id: c, job: formattingData[c]}
+            tasks <- task
+        }
+        close(tasks)
+        runWorkers(numWorkers, tasks, results, f)
+        showResults(results)
+    }
+    
 }
 
 func main() {
 	numWorkers := 3
     numTasks := 20
 	
-    tasks := make(chan string, numTasks)
-    results := make(chan []byte, numTasks)
+    tasks := make(chan Task, numTasks)
+    results := make(chan Result, numTasks)
 
-    data := "https://postman-rest-api-learner.glitch.me/info"
+    data := []string{"123", "43124413", "https://postman-rest-api-learner.glitch.me/info"} 
 
     queue(numWorkers, numTasks, tasks, results, data, getReq)
 }
