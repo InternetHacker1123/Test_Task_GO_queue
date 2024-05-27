@@ -83,7 +83,8 @@ func showResults(results chan Result) {
     defer close(results)
     for c := 1; c <= len(results); c++ {
         result := <-results
-        fmt.Println("Результат:", rune(result.id), result.job, result.result)
+        fmt.Printf("Результат: id:%d\ntask: %s\nresult: %s\n\n\n", rune(result.id), result.job, result.result)
+        
     }
     
     
@@ -137,7 +138,7 @@ func queue(numWorkers int, numTasks int, tasks chan Task, results chan Result, d
 }
 
 func main() {
-    numWorkers := 3
+	numWorkers := 3
     numTasks := 20
 	
     tasks := make(chan Task, numTasks)
