@@ -93,7 +93,7 @@ func queue(numWorkers int, numTasks int, tasks chan Task, results chan Result, d
     
     switch data.(type) {
 
-    case int: formattingData := int(data.(int))
+    case int: formattingData := data.(int) 
         for c := 1; c <= numTasks; c++ {
             task := Task{id: c, job: formattingData}
             tasks <- task
@@ -103,7 +103,7 @@ func queue(numWorkers int, numTasks int, tasks chan Task, results chan Result, d
         showResults(results)
 
 
-    case string: formattingData := string(data.(string))
+    case string: formattingData := data.(string)
         for c := 1; c <= numTasks; c++ {
             task := Task{id: c, job: formattingData}
             tasks <- task
@@ -113,7 +113,7 @@ func queue(numWorkers int, numTasks int, tasks chan Task, results chan Result, d
         showResults(results)
 
 
-    case []int: formattingData := []int(data.([]int))
+    case []int: formattingData := data.([]int)
         for c := 0; c <= len(formattingData) - 1; c++ {
             task := Task{id: c, job: formattingData[c]}
             tasks <- task
@@ -123,7 +123,7 @@ func queue(numWorkers int, numTasks int, tasks chan Task, results chan Result, d
         showResults(results)
 
 
-    case []string: formattingData := []string(data.([]string))
+    case []string: formattingData := data.([]string)
         for c := 0; c <= len(formattingData) - 1; c++ {
             task := Task{id: c, job: formattingData[c]}
             tasks <- task
