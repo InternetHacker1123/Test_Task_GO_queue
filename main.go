@@ -7,19 +7,20 @@ import (
 	"sync"
 )
 
-
+// структура таска
 type Task struct {
     id int
     job Data
 }
 
+// структура результата
 type Result struct {
     id int
     job Data
     result Data
 }
 
-
+// тип дата пользовательский
 type Data interface{}
 
 //функция обработчик тасков 2
