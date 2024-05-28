@@ -20,10 +20,10 @@ type Result struct {
     result Data
 }
 
-// тип дата пользовательский
+// пустой интерфейс для получения даты любого типа
 type Data interface{}
 
-//функция обработчик тасков 2
+//функция обработчик тасков 2 (для работы с интовой датой)
 func inc(task Task) (Result, error) {
     res := task.job.(int)
     res++
@@ -33,7 +33,7 @@ func inc(task Task) (Result, error) {
 
 
 
-// функция обработчик тасков
+// функция обработчик тасков (для работы с стринговой датой)
 func getReq(task Task) (Result, error) {
     resp, err := http.Get(task.job.(string))
     if err != nil {
@@ -85,10 +85,7 @@ func showResults(results chan Result) {
     for c := 1; c <= len(results); c++ {
         result := <-results
         fmt.Printf("Результат: id:%d\ntask: %s\nresult: %s\n\n\n", rune(result.id), result.job, result.result)
-        
     }
-    
-    
 }
 
 // очередь
